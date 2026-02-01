@@ -2,6 +2,7 @@ package main;
 
 import Tile.TileManger;
 import entity.Player;
+import object.SuperObject;
 
 import javax.swing.JPanel;
 import java.awt.Dimension;
@@ -22,13 +23,24 @@ public class GamePanel extends JPanel implements Runnable {
     public final int screenWidth = tileSize * maxScreenCol; // 1024 px
     public final int screenHeight = tileSize * maxScreenRow; // 768 px
 
+    //World Settings
+
+    public final int maxWorldCol=50;
+    public final int maxWorldRow=50;
+    public final int worldWidth=tileSize*maxWorldCol;
+    public final int worldHeight=tileSize*maxWorldRow;
+
+
+
     //FPS
     int FPS = 60;
     TileManger tileM = new TileManger(this);
     KeyHandler keyH = new KeyHandler();
     Thread gameThread;
-    Player player = new Player(this,keyH);
-
+    public CollisionChecker cChecker = new CollisionChecker(this);
+    public AssetSetter assetSetter = new AssetSetter(this);
+    public Player player = new Player(this,keyH);
+    public SuperObject obj[] = new SuperObject[10];
 
 
     public GamePanel() {
@@ -39,7 +51,10 @@ public class GamePanel extends JPanel implements Runnable {
         this.addKeyListener(keyH);
         this.setFocusable(true);
     }
-
+    public void setupGame()
+    {
+        assetSetter.setObject();
+    }
     public void startGameThread() {
 
         gameThread = new Thread(this);
@@ -88,6 +103,12 @@ public class GamePanel extends JPanel implements Runnable {
 
         Graphics2D g2 = (Graphics2D) g;
         tileM.draw(g2);
+
+        for (int i = 0; i < obj.length; i++) {
+            if (obj[i] != null) {
+                obj[i].draw(g2 , this);
+            }
+        }
 
         player.draw(g2);
 

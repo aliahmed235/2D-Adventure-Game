@@ -4,7 +4,7 @@ import main.GamePanel;
 import main.KeyHandler;
 
 import javax.imageio.ImageIO;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -14,17 +14,29 @@ public class Player extends Entity {
     private final GamePanel gp;
     private final KeyHandler keyH;
 
+    public final int screenX;
+    public final int screenY;
+
     public Player(GamePanel gp , KeyHandler keyH) {
         this.gp = gp;
         this.keyH = keyH;
+
+        screenX = gp.screenWidth/2 - (gp.tileSize/2);
+        screenY = gp.screenHeight/2 - (gp.tileSize/2);
+
+        solidArea = new Rectangle();
+        solidArea.x = 8;
+        solidArea.y = 16;
+        solidArea.width = 32;
+        solidArea.height = 32;
 
         setDefaultValues();
         getPlayerImage();
     }
 
     public void setDefaultValues() {
-        x = 100;
-        y = 100;
+        worldX = gp.tileSize*23;
+        worldY=  gp.tileSize*21;
         speed = 4;
         direction = "down";
         spriteCounter = 0;
@@ -51,22 +63,34 @@ public class Player extends Entity {
 
         if (keyH.upPressed) {
             direction = "up";
-            y -= speed;
             moving = true;
         } else if (keyH.downPressed) {
             direction = "down";
-            y += speed;
             moving = true;
         } else if (keyH.leftPressed) {
             direction = "left";
-            x -= speed;
             moving = true;
         } else if (keyH.rightPressed) {
             direction = "right";
-            x += speed;
             moving = true;
         }
 
+        //Check Tile Collision
+        collisionOn = false;
+        gp.cChecker.checkTile(this);
+
+        //if a key is pressed AND collision is false, THEN move
+        if (moving == true && collisionOn == false) // <--- THIS IS THE FIX
+        {
+            switch (direction) {
+                case "up": worldY -= speed;break;
+                case "down": worldY += speed;break;
+                case "left": worldX -= speed;break;
+                case "right": worldX += speed;break;
+            }
+        }
+
+        // Animation code (this part was already correct)
         if (moving) {
             spriteCounter++;
             if (spriteCounter > 12) {
@@ -100,7 +124,7 @@ public class Player extends Entity {
         }
 
         if (image != null) {
-            g2.drawImage(image, x, y, gp.tileSize, gp.tileSize, null);
+            g2.drawImage(image, screenX, screenY, gp.tileSize, gp.tileSize, null);
         }
     }
 }
