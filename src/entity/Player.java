@@ -17,6 +17,8 @@ public class Player extends Entity {
     public final int screenX;
     public final int screenY;
 
+    public int hasKey = 0;
+
     public Player(GamePanel gp , KeyHandler keyH) {
         this.gp = gp;
         this.keyH = keyH;
@@ -27,6 +29,8 @@ public class Player extends Entity {
         solidArea = new Rectangle();
         solidArea.x = 8;
         solidArea.y = 16;
+        solidAreaDefaultX = solidArea.x;
+        solidAreaDefaultY = solidArea.y;
         solidArea.width = 32;
         solidArea.height = 32;
 
@@ -75,12 +79,14 @@ public class Player extends Entity {
             moving = true;
         }
 
-        //Check Tile Collision
         collisionOn = false;
         gp.cChecker.checkTile(this);
 
-        //if a key is pressed AND collision is false, THEN move
-        if (moving == true && collisionOn == false) // <--- THIS IS THE FIX
+       int objIndex =  gp.cChecker.checkObject(this, true);
+
+        pickUpObject(objIndex);
+
+        if (moving == true && collisionOn == false)
         {
             switch (direction) {
                 case "up": worldY -= speed;break;
@@ -90,7 +96,6 @@ public class Player extends Entity {
             }
         }
 
-        // Animation code (this part was already correct)
         if (moving) {
             spriteCounter++;
             if (spriteCounter > 12) {
@@ -100,6 +105,42 @@ public class Player extends Entity {
         } else {
             spriteNum = 1;
             spriteCounter = 0;
+        }
+    }
+
+    public void pickUpObject(int i) {
+        if (i != 999) {
+            String ObjectName = gp.obj[i].name;
+
+            switch (ObjectName) {
+                case "Key":
+                    gp.playSe(1);
+                    hasKey++;
+                    gp.obj[i] = null;
+                    gp.ui.showMessage("You got a key! ");
+                    break;
+                case "Door":
+                    if (hasKey > 0) {
+                        gp.playSe(3);
+                        hasKey--;
+                        gp.obj[i] = null;
+                    gp.ui.showMessage("You opened the door");
+                    } else {
+                        gp.ui.showMessage("You need a key to open this door.");
+                    }
+
+                    break;
+                case "Boots":
+                    gp.playSe(2);
+                    speed += 2;
+                    gp.obj[i] = null;
+                    gp.ui.showMessage("Speed Up");
+                        break;
+                    case "Chest":
+                        gp.ui.gameFinished = true;
+                        gp.stopMusic();
+                        gp.playSe(4);
+            }
         }
     }
 
