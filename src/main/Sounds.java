@@ -3,24 +3,25 @@ package main;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import java.io.File;
+import java.net.URI;
+import java.net.URL;
 
 public class Sounds {
     Clip clip;
-    String soundPath[] = new String[30];
+    URL soundURI[] = new URL[30];
 
 
     public Sounds(){
-        soundPath[0] = "res/sounds/BlueBoyAdventure.wav";
-        soundPath[1] = "res/sounds/coin.wav";
-        soundPath[2] = "res/sounds/powerup.wav";
-        soundPath[3] = "res/sounds/unlock.wav";
-        soundPath[4] = "res/sounds/fanfare.wav";
+        soundURI[0] = getClass().getResource("/sounds/BlueBoyAdventure.wav");
+        soundURI[1] = getClass().getResource("/sounds/coin.wav");
+        soundURI[2] = getClass().getResource("/sounds/powerup.wav");
+        soundURI[3] = getClass().getResource("/sounds/unlock.wav");
+        soundURI[4] = getClass().getResource("/sounds/fanfare.wav");
     }
 
     public void setFile(int i){
         try {
-            AudioInputStream ais = AudioSystem.getAudioInputStream(new File(soundPath[i]));
+            AudioInputStream ais = AudioSystem.getAudioInputStream(soundURI[i]);
             clip = AudioSystem.getClip();
             clip.open(ais);
         }
