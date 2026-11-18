@@ -1,4 +1,4 @@
-# The Sunken Seal
+# True Adventure
 
 A top-down Java adventure built from the original 2D Adventure project and its existing pixel art and audio.
 
@@ -12,15 +12,15 @@ The smaller HUD leaves more of the map visible. Press **F11** to switch between 
 
 ## Download and play on Windows
 
-Download [The Sunken Seal 2.0.0 for Windows x64](https://github.com/aliahmed235/2D-Adventure-Game/releases/download/v2.0.0/The-Sunken-Seal-2.0.0-Windows-x64.zip).
+For players, download the **Windows x64 ZIP**: [True Adventure 2.0.1](https://github.com/aliahmed235/2D-Adventure-Game/releases/download/v2.0.1/True-Adventure-2.0.1-Windows-x64.zip).
 
 1. Use **Extract All** on the ZIP.
-2. Open the **The Sunken Seal** folder.
-3. Double-click **The Sunken Seal.exe**.
+2. Open the **True Adventure** folder.
+3. Double-click **True Adventure.exe**.
 
-**Java is included. Players do not need to install Java or run an installer.** Keep the **app** and **runtime** folders beside the EXE. This package is for 64-bit Windows 10/11.
+**Java is included. Players do not need to install Java or run an installer.** Keep the **app** and **runtime** folders beside the EXE. This package is for 64-bit Windows 10/11. Players need this ZIP only.
 
-The [release page](https://github.com/aliahmed235/2D-Adventure-Game/releases/latest) also has a standalone JAR for users who already have Java 17+, checksums, and the bundled runtime's source archive.
+The [release page](https://github.com/aliahmed235/2D-Adventure-Game/releases/latest) also has a standalone JAR for users who already have Java 17+ and download checksums. The unchanged runtime's [matching source archive](https://github.com/aliahmed235/2D-Adventure-Game/releases/download/v2.0.0/OpenJDK17U-jdk-sources_17.0.21_9.tar.gz) remains available with version 2.0.0.
 
 ## Build from source
 
@@ -46,7 +46,7 @@ sh build.sh --test
 sh play.sh
 ~~~
 
-The build produces **build/sunken-seal.jar** and updates **game.jar** and **dist/game.jar**. You can also run the game with:
+The build produces **build/true-adventure.jar** and updates **game.jar** and **dist/game.jar**. You can also run the game with:
 
 ~~~sh
 java -jar game.jar
@@ -54,7 +54,7 @@ java -jar game.jar
 
 On Windows, **dist/2DAdventureGame.exe** is a small launcher for the packaged Java game. The build refreshes it when the installed Windows .NET Framework C# compiler is available; its source is **tools/WindowsLauncher.cs**. The game itself still uses Java 17. **dist/RUN_GAME.bat** and **play.bat** provide direct Java launch options if the optional executable cannot be rebuilt.
 
-The public Windows download uses a separate native launcher and a small bundled Eclipse Temurin runtime. To create and verify that portable package, run **.\package-windows.ps1 -Version 2.0.0 -Test**. See [the release guide](docs/RELEASING.md) for the layout, checks, and publishing steps.
+The public Windows download uses a separate native launcher and a small bundled Eclipse Temurin runtime. To create and verify that portable package, run **.\package-windows.ps1 -Version 2.0.1 -Test**. See [the release guide](docs/RELEASING.md) for the layout, checks, and publishing steps.
 
 The test command also renders the title, HUD, inventory, levels, and victory screen to **build/screenshots**. These headless checks complement a normal playthrough in the game window.
 
