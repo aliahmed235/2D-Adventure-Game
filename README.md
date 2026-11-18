@@ -10,7 +10,19 @@ Enter your name on the title screen before starting. Names can contain up to 16 
 
 The smaller HUD leaves more of the map visible. Press **F11** to switch between windowed and fullscreen play. The game keeps its proportions, with borders where needed. The pause menu provides Resume, Inventory, How to play, Fullscreen, Sound, and Quit options; use the arrow keys or mouse to choose.
 
-## Build and play
+## Download and play on Windows
+
+Download [The Sunken Seal 2.0.0 for Windows x64](https://github.com/aliahmed235/2D-Adventure-Game/releases/download/v2.0.0/The-Sunken-Seal-2.0.0-Windows-x64.zip).
+
+1. Use **Extract All** on the ZIP.
+2. Open the **The Sunken Seal** folder.
+3. Double-click **The Sunken Seal.exe**.
+
+**Java is included. Players do not need to install Java or run an installer.** Keep the **app** and **runtime** folders beside the EXE. This package is for 64-bit Windows 10/11.
+
+The [release page](https://github.com/aliahmed235/2D-Adventure-Game/releases/latest) also has a standalone JAR for users who already have Java 17+, checksums, and the bundled runtime's source archive.
+
+## Build from source
 
 Use **JDK 17 or newer**. There are no third-party dependencies, Maven, or Gradle requirements.
 
@@ -41,6 +53,8 @@ java -jar game.jar
 ~~~
 
 On Windows, **dist/2DAdventureGame.exe** is a small launcher for the packaged Java game. The build refreshes it when the installed Windows .NET Framework C# compiler is available; its source is **tools/WindowsLauncher.cs**. The game itself still uses Java 17. **dist/RUN_GAME.bat** and **play.bat** provide direct Java launch options if the optional executable cannot be rebuilt.
+
+The public Windows download uses a separate native launcher and a small bundled Eclipse Temurin runtime. To create and verify that portable package, run **.\package-windows.ps1 -Version 2.0.0 -Test**. See [the release guide](docs/RELEASING.md) for the layout, checks, and publishing steps.
 
 The test command also renders the title, HUD, inventory, levels, and victory screen to **build/screenshots**. These headless checks complement a normal playthrough in the game window.
 
