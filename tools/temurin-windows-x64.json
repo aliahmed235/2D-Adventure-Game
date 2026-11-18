@@ -1,0 +1,12 @@
+{
+  "version": "17.0.21+9",
+  "javaVersion": "17.0.21",
+  "directory": "jdk-17.0.21+9",
+  "archive": "OpenJDK17U-jdk_x64_windows_hotspot_17.0.21_9.zip",
+  "url": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.21%2B9/OpenJDK17U-jdk_x64_windows_hotspot_17.0.21_9.zip",
+  "sha256": "98518ecf554465057ee5509462631deeee374bc368c12a411d225cd29381f84b",
+  "sourceArchive": "OpenJDK17U-jdk-sources_17.0.21_9.tar.gz",
+  "sourceUrl": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.21%2B9/OpenJDK17U-jdk-sources_17.0.21_9.tar.gz",
+  "sourceSha256": "89a455fa83b19e3a166bca47a465d51712441be607543dd465083ef2437a426d",
+  "upstreamRelease": "https://github.com/adoptium/temurin17-binaries/releases/tag/jdk-17.0.21%2B9"
+}
