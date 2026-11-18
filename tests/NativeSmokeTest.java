@@ -7,7 +7,7 @@ import javax.swing.*;
 public final class NativeSmokeTest {
     public static void main(String[] args) throws Exception {
         SwingUtilities.invokeAndWait(() -> {
-            JFrame frame = new JFrame("Sunken Seal startup check");
+            JFrame frame = new JFrame("True Adventure startup check");
             GamePanel panel = new GamePanel();
             frame.add(panel);
             frame.pack();
