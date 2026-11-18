@@ -24,7 +24,7 @@ public final class NativeWindowTest {
         AtomicReference<JFrame> frameRef = new AtomicReference<>();
         AtomicReference<GamePanel> panelRef = new AtomicReference<>();
         SwingUtilities.invokeAndWait(() -> {
-            JFrame frame = new JFrame("The Sunken Seal | Fullscreen check");
+            JFrame frame = new JFrame("True Adventure | Fullscreen check");
             GameSession session = new GameSession(new AudioManager(false));
             GamePanel panel = new GamePanel(session);
             frameRef.set(frame);
