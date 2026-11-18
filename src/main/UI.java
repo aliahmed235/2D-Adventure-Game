@@ -87,7 +87,7 @@ public final class UI {
         int x = width / 2 - 320, y = height / 2 - 250;
         panel(g, x, y, 640, 500);
         centered(g, "A SMALL ADVENTURE", width / 2, y + 44, LABEL, MUTED);
-        centered(g, "THE SUNKEN SEAL", width / 2, y + 105, TITLE.deriveFont(43f), GOLD);
+        centered(g, "TRUE ADVENTURE", width / 2, y + 105, TITLE.deriveFont(43f), GOLD);
         centered(g, "Find four seals. Defeat the king.", width / 2, y + 138, BODY, CREAM);
         rule(g, x + 52, y + 164, 536, BRASS);
 
