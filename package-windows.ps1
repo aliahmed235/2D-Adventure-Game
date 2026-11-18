@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '2.0.0',
+    [string]$Version = '2.0.1',
     [switch]$Test,
     [switch]$SkipBuild
 )
@@ -8,7 +8,7 @@ $ProgressPreference = 'SilentlyContinue'
 if ($env:OS -ne 'Windows_NT' -or -not [Environment]::Is64BitOperatingSystem) {
     throw 'The Windows x64 package must be built on 64-bit Windows.'
 }
-if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'Use a version such as 2.0.0.' }
+if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'Use a version such as 2.0.1.' }
 $projectDir = $PSScriptRoot
 $buildRoot = [IO.Path]::GetFullPath((Join-Path $projectDir 'build'))
 $toolchainRoot = Join-Path $buildRoot 'toolchains'
@@ -55,7 +55,7 @@ if (-not $SkipBuild) {
         & (Join-Path $projectDir 'build.ps1') -Test:$Test
     } finally { $env:JAVA_HOME = $previousJavaHome }
 }
-$gameJar = Join-Path $buildRoot 'sunken-seal.jar'
+$gameJar = Join-Path $buildRoot 'true-adventure.jar'
 if (-not (Test-Path -LiteralPath $gameJar)) { throw 'Build the game JAR first.' }
 
 $workRoot = Join-Path $buildRoot ('packaging/' + $Version)
@@ -69,18 +69,18 @@ $runtime = Join-Path $workRoot 'runtime'
 & (Join-Path $jdkDir 'bin/jlink.exe') --add-modules java.desktop --strip-debug --no-header-files --no-man-pages --compress=2 --output $runtime
 if ($LASTEXITCODE -ne 0) { throw 'Runtime creation failed.' }
 $imageRoot = Join-Path $workRoot 'image'
-& (Join-Path $jdkDir 'bin/jpackage.exe') --type app-image --name 'The Sunken Seal' --app-version $Version --vendor 'aliahmed235' --description 'A five-map pixel adventure' --input $inputDir --main-jar game.jar --main-class main.Main --runtime-image $runtime --dest $imageRoot --java-options '-Dfile.encoding=UTF-8'
+& (Join-Path $jdkDir 'bin/jpackage.exe') --type app-image --name 'True Adventure' --app-version $Version --vendor 'aliahmed235' --description 'A five-map pixel adventure' --input $inputDir --main-jar game.jar --main-class main.Main --runtime-image $runtime --dest $imageRoot --java-options '-Dfile.encoding=UTF-8'
 if ($LASTEXITCODE -ne 0) { throw 'Windows application packaging failed.' }
-$appDir = Join-Path $imageRoot 'The Sunken Seal'
+$appDir = Join-Path $imageRoot 'True Adventure'
 $utf8 = [Text.UTF8Encoding]::new($false)
 $playInstructions = @"
-THE SUNKEN SEAL $Version
+TRUE ADVENTURE $Version
 Windows 10/11, 64-bit
 
 HOW TO PLAY
 1. Extract the complete ZIP file.
-2. Open the 'The Sunken Seal' folder.
-3. Double-click 'The Sunken Seal.exe'.
+2. Open the 'True Adventure' folder.
+3. Double-click 'True Adventure.exe'.
 
 Java is included. You do not need to install Java or run an installer.
 Keep the app and runtime folders beside the EXE.
@@ -122,8 +122,9 @@ Verified toolchain SHA-256: $($pin.sha256)
 Corresponding upstream source: $($pin.sourceUrl)
 Source SHA-256: $($pin.sourceSha256)
 
-The matching source archive is also provided as a separate download with this
-game release: $($pin.sourceArchive)
+Matching source archive: $($pin.sourceArchive)
+Project-hosted source download: $($pin.distributedSourceUrl)
+The game release notes also link to this matching source archive.
 
 The packaging recipe and game source are available in the project repository.
 No changes were made to OpenJDK source code.
@@ -153,8 +154,8 @@ if ($Test) {
     & (Join-Path $projectDir 'tools/test-windows-package.ps1') -AppImagePath $appDir -NativeWindows
 }
 
-$zipName = 'The-Sunken-Seal-' + $Version + '-Windows-x64.zip'
-$jarName = 'The-Sunken-Seal-' + $Version + '.jar'
+$zipName = 'True-Adventure-' + $Version + '-Windows-x64.zip'
+$jarName = 'True-Adventure-' + $Version + '.jar'
 Compress-Archive -LiteralPath $appDir -DestinationPath (Join-Path $releaseRoot $zipName) -CompressionLevel Optimal
 Copy-Item -LiteralPath $gameJar -Destination (Join-Path $releaseRoot $jarName)
 $sourceArchive = Join-Path $toolchainRoot $pin.sourceArchive
