@@ -1,0 +1,4 @@
+# Whitespace and comments are accepted.
+0   0 0
+
+0 0   0
