@@ -30,8 +30,8 @@ if "$run_tests"; then
     "$compiler" --release 17 -encoding UTF-8 -cp 'build/classes:res:tests/resources' -d build/test-classes @build/test-sources.txt
     "$java" -Djava.awt.headless=true -cp 'build/test-classes:build/classes:res:tests/resources' tests.GameTests
 fi
-"$jar" --create --file build/sunken-seal.jar --main-class main.Main -C build/classes . -C res .
-cp build/sunken-seal.jar game.jar
-if [ -d dist ]; then cp build/sunken-seal.jar dist/game.jar; fi
-printf 'Built build/sunken-seal.jar\n'
-if "$run_game"; then "$java" -jar build/sunken-seal.jar; fi
+"$jar" --create --file build/true-adventure.jar --main-class main.Main -C build/classes . -C res .
+cp build/true-adventure.jar game.jar
+if [ -d dist ]; then cp build/true-adventure.jar dist/game.jar; fi
+printf 'Built build/true-adventure.jar\n'
+if "$run_game"; then "$java" -jar build/true-adventure.jar; fi
