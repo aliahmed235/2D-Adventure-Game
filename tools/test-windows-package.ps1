@@ -155,7 +155,7 @@ function Test-NativeLauncher([string]$Executable, [string]$Runtime) {
         if (-not $loadedJvm.StartsWith($boundary, [StringComparison]::OrdinalIgnoreCase)) {
             throw "The game loaded an external JVM instead of its bundled runtime: $loadedJvm"
         }
-        if ($windowProcess.MainWindowTitle -notlike 'The Sunken Seal*') {
+        if ($windowProcess.MainWindowTitle -notlike 'True Adventure*') {
             throw ('The launcher did not reach the expected game window: ' + $windowProcess.MainWindowTitle)
         }
         Write-Output ("Native launcher PID $launcherPid, game PID " + $windowProcess.Id + ' loaded bundled JVM: ' + $loadedJvm)
@@ -198,11 +198,11 @@ function Test-NativeLauncher([string]$Executable, [string]$Runtime) {
 }
 
 $appImage = Get-ExistingPath $AppImagePath 'app image folder' 'Container'
-$launcher = Get-ExistingPath (Join-Path $appImage 'The Sunken Seal.exe') 'native game launcher' 'Leaf'
+$launcher = Get-ExistingPath (Join-Path $appImage 'True Adventure.exe') 'native game launcher' 'Leaf'
 $jar = Get-ExistingPath (Join-Path $appImage 'app/game.jar') 'packaged game JAR' 'Leaf'
 $runtimeRoot = Get-ExistingPath (Join-Path $appImage 'runtime') 'bundled runtime folder' 'Container'
 $runtimeJava = Get-ExistingPath (Join-Path $runtimeRoot 'bin/java.exe') 'bundled Java test launcher' 'Leaf'
-$null = Get-ExistingPath (Join-Path $appImage 'app/The Sunken Seal.cfg') 'native launcher configuration' 'Leaf'
+$null = Get-ExistingPath (Join-Path $appImage 'app/True Adventure.cfg') 'native launcher configuration' 'Leaf'
 $null = Get-ExistingPath (Join-Path $runtimeRoot 'release') 'runtime version metadata' 'Leaf'
 $null = Get-ExistingPath (Join-Path $runtimeRoot 'legal/java.base') 'runtime license notices' 'Container'
 $classes = Get-ExistingPath $TestClassesPath 'compiled test classes' 'Container'
