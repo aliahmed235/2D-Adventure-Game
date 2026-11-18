@@ -1,136 +1,159 @@
 package main;
 
-import Tile.TileManger;
-import entity.Player;
-import object.SuperObject;
+import game.GameSession;
+import render.WorldRenderer;
 
-import javax.swing.JPanel;
-import java.awt.Dimension;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
-public class GamePanel extends JPanel implements Runnable {
-
-    // SCREEN SETTINGS
-    final int OrginalTileSize = 16;
-    final int scale = 4; // 64
-
-    public final int tileSize = OrginalTileSize * scale; // 48x48
-
-    public final int maxScreenCol = 16;
-    public final int maxScreenRow = 12;
-    public final int screenWidth = tileSize * maxScreenCol; // 1024 px
-    public final int screenHeight = tileSize * maxScreenRow; // 768 px
-
-    //World Settings
-
-    public final int maxWorldCol=50;
-    public final int maxWorldRow=50;
-
-
-
-    //FPS
-    int FPS = 60;
-    TileManger tileM = new TileManger(this);
-    KeyHandler keyH = new KeyHandler();
-    Sounds se = new Sounds();
-    Sounds music = new Sounds();
-    public CollisionChecker cChecker = new CollisionChecker(this);
-    public AssetSetter assetSetter = new AssetSetter(this);
-    public Player player = new Player(this,keyH);
-    public SuperObject obj[] = new SuperObject[10];
-    public  UI ui = new UI(this);
-    Thread gameThread;
-
+/** Swing owns both updates and painting on the EDT: no shared-thread races. */
+public final class GamePanel extends JPanel implements AutoCloseable {
+    public static final int WIDTH = 1024;
+    public static final int HEIGHT = 768;
+    private final GameSession session;
+    private final KeyHandler input = new KeyHandler();
+    private final WorldRenderer renderer = new WorldRenderer();
+    private final UI ui;
+    private final Timer timer;
+    private long lastTick;
+    private boolean windowTransition;
+    private boolean closed;
+    private Runnable fullscreenAction = () -> { };
+    private Runnable quitAction = () -> { };
 
     public GamePanel() {
-
-        this.setPreferredSize(new Dimension(screenWidth, screenHeight));
-        this.setBackground(Color.black);
-        this.setDoubleBuffered(true);
-        this.addKeyListener(keyH);
-        this.setFocusable(true);
+        this(new GameSession());
     }
-    public void setupGame()
-    {
-        assetSetter.setObject();
-        playMusic(0);
-    }
-    public void startGameThread() {
 
-        gameThread = new Thread(this);
-        gameThread.start();
-    }
-    @Override
-    public void run() {
-
-        double drawInterval = 1000000000 / FPS;
-        double delta = 0;
-        long lastTime = System.nanoTime();
-        long currentTime;
-        long timer = 0;
-        int drawCount = 0;
-
-        while (gameThread != null) {
-            currentTime = System.nanoTime();
-
-            delta += (currentTime - lastTime) / drawInterval;
-            timer += (currentTime - lastTime);
-            lastTime = currentTime;
-
-            if (delta >= 1) {
-                update();
+    public GamePanel(GameSession session) {
+        this.session = java.util.Objects.requireNonNull(session);
+        ui = new UI(session);
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        setBackground(Color.BLACK);
+        setDoubleBuffered(true);
+        setFocusable(true);
+        setFocusTraversalKeysEnabled(false); // Tab cycles tools inside the game.
+        addKeyListener(input);
+        addFocusListener(new FocusAdapter() {
+            @Override public void focusLost(FocusEvent event) {
+                if (windowTransition) input.suppressHeldInput();
+                else { input.clear(); session.pauseForFocusLoss(); }
+            }
+        });
+        addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent event) {
+                requestFocusInWindow();
+                if (!SwingUtilities.isLeftMouseButton(event)) return;
+                Point point = logicalPoint(event);
+                if (point == null) return;
+                switch (session.state()) {
+                    case TITLE -> {
+                        if (MenuLayout.startButton(WIDTH, HEIGHT).contains(point)) {
+                            // The next update commits any final typed character before starting.
+                            input.trigger(KeyHandler.Action.START);
+                        }
+                    }
+                    case PAUSED -> {
+                        int option = MenuLayout.pauseOptionAt(point.x, point.y, WIDTH, HEIGHT);
+                        if (option >= 0) {
+                            input.suppressHeldInput();
+                            session.selectPauseOption(option);
+                            session.activatePauseOption();
+                        }
+                    }
+                    case CONTROLS -> {
+                        if (MenuLayout.controlsBackButton(WIDTH, HEIGHT).contains(point)) {
+                            input.suppressHeldInput();
+                            session.closeControls();
+                        }
+                    }
+                    default -> { }
+                }
                 repaint();
-                delta--;
-                drawCount++;
             }
-            if (timer >= 1000000000) {
-                System.out.println("FPS: " + drawCount);
-                drawCount = 0;
-                timer = 0;
+        });
+        addMouseMotionListener(new MouseMotionAdapter() {
+            @Override public void mouseMoved(MouseEvent event) {
+                Point point = logicalPoint(event);
+                boolean actionable = false;
+                if (point != null) {
+                    switch (session.state()) {
+                        case TITLE -> actionable = MenuLayout.startButton(WIDTH, HEIGHT).contains(point);
+                        case CONTROLS -> actionable = MenuLayout.controlsBackButton(WIDTH, HEIGHT).contains(point);
+                        case PAUSED -> {
+                            int option = MenuLayout.pauseOptionAt(point.x, point.y, WIDTH, HEIGHT);
+                            actionable = option >= 0;
+                            if (actionable) { session.selectPauseOption(option); repaint(); }
+                        }
+                        default -> { }
+                    }
+                }
+                setCursor(Cursor.getPredefinedCursor(actionable ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
             }
-        }
-
-    }
-    public void update() {
-
-      player.update();
-
+        });
+        timer = new Timer(1000 / 60, event -> tick());
+        timer.setCoalesce(true);
     }
 
-    public void paintComponent(Graphics g) {
-
-        super.paintComponent(g);
-
-        Graphics2D g2 = (Graphics2D) g;
-        tileM.draw(g2);
-
-        for (int i = 0; i < obj.length; i++) {
-            if (obj[i] != null) {
-                obj[i].draw(g2 , this);
-            }
-        }
-
-        player.draw(g2);
-
-
-        ui.draw(g2);
-
-        g2.dispose();
+    public void start() {
+        lastTick = System.nanoTime();
+        timer.start();
+        requestFocusInWindow();
     }
-    public void playMusic(int i)
-    {
-        music.setFile(i);
-        music.play();
-        music.loop();
+
+    public void setWindowActions(Runnable fullscreenAction, Runnable quitAction) {
+        this.fullscreenAction = java.util.Objects.requireNonNull(fullscreenAction);
+        this.quitAction = java.util.Objects.requireNonNull(quitAction);
     }
-    public void stopMusic(){
-        music.stop();
+
+    public GameSession session() { return session; }
+
+    public void setFullscreenMode(boolean value) { session.setFullscreen(value); }
+
+    public void setWindowTransition(boolean value) {
+        windowTransition = value;
+        input.suppressHeldInput();
+        lastTick = System.nanoTime();
     }
-    public void playSe(int i)
-    {
-        se.setFile(i);
-        se.play();
+
+    private Point logicalPoint(MouseEvent event) {
+        if (getWidth() <= 0 || getHeight() <= 0) return null;
+        return Viewport.fit(getWidth(), getHeight(), WIDTH, HEIGHT).toLogical(event.getX(), event.getY());
+    }
+
+    private void tick() {
+        long now = System.nanoTime();
+        // Ignore long OS stalls rather than moving an actor through an entire room.
+        double dt = Math.min(.05, (now - lastTick) / 1_000_000_000.0);
+        lastTick = now;
+        session.update(dt, input);
+        if (session.consumeFullscreenRequest()) fullscreenAction.run();
+        if (session.consumeQuitRequest()) quitAction.run();
+        repaint();
+    }
+
+    @Override protected void paintComponent(Graphics graphics) {
+        super.paintComponent(graphics);
+        Graphics2D g = (Graphics2D) graphics.create();
+        if (getWidth() <= 0 || getHeight() <= 0) { g.dispose(); return; }
+        Viewport.fit(getWidth(), getHeight(), WIDTH, HEIGHT).apply(g);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        renderer.draw(g, session, WIDTH, HEIGHT);
+        ui.draw(g, WIDTH, HEIGHT);
+        g.dispose();
+    }
+
+    @Override public void close() {
+        if (closed) return;
+        closed = true;
+        timer.stop();
+        input.clear();
+        session.close();
     }
 }
