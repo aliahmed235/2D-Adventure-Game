@@ -52,7 +52,7 @@ if ($Test) {
     if ($LASTEXITCODE -ne 0) { throw 'Game tests failed.' }
 }
 
-$artifact = Join-Path $buildDir 'sunken-seal.jar'
+$artifact = Join-Path $buildDir 'true-adventure.jar'
 & $jar --create --file $artifact --main-class main.Main -C $classesDir . -C (Join-Path $projectDir 'res') .
 if ($LASTEXITCODE -ne 0) { throw 'JAR packaging failed.' }
 Copy-Item -LiteralPath $artifact -Destination (Join-Path $projectDir 'game.jar') -Force
