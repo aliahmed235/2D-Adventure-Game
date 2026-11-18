@@ -1,172 +1,170 @@
 package entity;
 
-import main.GamePanel;
-import main.KeyHandler;
+import core.Assets;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.util.function.Predicate;
 
-public class Player extends Entity {
+/** Player movement, health, and attack timing. Interactions and inventory belong to the session. */
+public final class Player extends Entity {
+    public static final int TILE_SIZE = 64;
+    public static final int MAX_HEALTH = 6;
+    private static final double ATTACK_COOLDOWN = 0.36;
+    private static final double DAMAGE_IMMUNITY = 0.90;
 
-    private final GamePanel gp;
-    private final KeyHandler keyH;
+    private Direction direction = Direction.DOWN;
+    private boolean moving;
+    private int health = MAX_HEALTH;
+    private double animationTime;
+    private double attackRemaining;
+    private double attackCooldown;
+    private double immunityRemaining;
+    private long attackId;
+    private Weapon weapon = Weapon.SWORD;
+    private boolean guarding;
+    private boolean blockPending;
+    private double blockCooldown;
 
-    public final int screenX;
-    public final int screenY;
+    public Player() { }
 
-    public int hasKey = 0;
+    public Direction direction() { return direction; }
+    public boolean moving() { return moving; }
+    public int frame() { return moving && ((int) (animationTime / 0.14) & 1) == 1 ? 2 : 1; }
+    public int health() { return health; }
+    public int maxHealth() { return MAX_HEALTH; }
+    public boolean alive() { return health > 0; }
+    public boolean attacking() { return attackRemaining > 0; }
+    public long attackId() { return attackId; }
+    public Weapon weapon() { return weapon; }
+    public void setWeapon(Weapon value) { if (!attacking()) weapon = java.util.Objects.requireNonNull(value); }
+    public boolean guarding() { return guarding; }
+    public void setGuarding(boolean value) { guarding = value && alive() && !attacking(); }
+    public boolean consumeBlock() { boolean pending = blockPending; blockPending = false; return pending; }
 
-    public Player(GamePanel gp , KeyHandler keyH) {
-        this.gp = gp;
-        this.keyH = keyH;
-
-        screenX = gp.screenWidth/2 - (gp.tileSize/2);
-        screenY = gp.screenHeight/2 - (gp.tileSize/2);
-
-        solidArea = new Rectangle();
-        solidArea.x = 8;
-        solidArea.y = 16;
-        solidAreaDefaultX = solidArea.x;
-        solidAreaDefaultY = solidArea.y;
-        solidArea.width = 32;
-        solidArea.height = 32;
-
-        setDefaultValues();
-        getPlayerImage();
+    @Override
+    public Rectangle2D.Double bounds() {
+        // The lower body is solid; the sprite's transparent margin and head are not.
+        return new Rectangle2D.Double(x + 16, y + 28, 32, 30);
     }
 
-    public void setDefaultValues() {
-        worldX = gp.tileSize*23;
-        worldY=  gp.tileSize*21;
-        speed = 4;
-        direction = "down";
-        spriteCounter = 0;
-        spriteNum = 1;
+    public void reset() {
+        x = y = 0;
+        health = MAX_HEALTH;
+        direction = Direction.DOWN;
+        moving = false;
+        animationTime = attackRemaining = attackCooldown = immunityRemaining = 0;
+        weapon = Weapon.SWORD;
+        guarding = blockPending = false;
+        blockCooldown = 0;
+        // Keep swing IDs monotonic if a checkpoint restores the player while enemies survive.
     }
 
-    public void getPlayerImage() {
-        try {
-            up1    = ImageIO.read(getClass().getResourceAsStream("/Player/boy_up_1.png"));
-            up2    = ImageIO.read(getClass().getResourceAsStream("/Player/boy_up_2.png"));
-            down1  = ImageIO.read(getClass().getResourceAsStream("/Player/boy_down_1.png"));
-            down2  = ImageIO.read(getClass().getResourceAsStream("/Player/boy_down_2.png"));
-            right1 = ImageIO.read(getClass().getResourceAsStream("/Player/boy_right_1.png"));
-            right2 = ImageIO.read(getClass().getResourceAsStream("/Player/boy_right_2.png"));
-            left1  = ImageIO.read(getClass().getResourceAsStream("/Player/boy_left_1.png"));
-            left2  = ImageIO.read(getClass().getResourceAsStream("/Player/boy_left_2.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void face(Direction direction) {
+        if (direction != null && !attacking()) this.direction = direction;
     }
 
+    public void update(double dt, int axisX, int axisY, boolean boots,
+                       Predicate<Rectangle2D> blocked) {
+        if (!Double.isFinite(dt) || dt < 0) throw new IllegalArgumentException("Invalid time step");
+        attackRemaining = Math.max(0, attackRemaining - dt);
+        attackCooldown = Math.max(0, attackCooldown - dt);
+        immunityRemaining = Math.max(0, immunityRemaining - dt);
+        blockCooldown = Math.max(0, blockCooldown - dt);
+        moving = false;
+        if (!alive()) return;
 
-    public void update() {
-        boolean moving = false;
-
-        if (keyH.upPressed) {
-            direction = "up";
-            moving = true;
-        } else if (keyH.downPressed) {
-            direction = "down";
-            moving = true;
-        } else if (keyH.leftPressed) {
-            direction = "left";
-            moving = true;
-        } else if (keyH.rightPressed) {
-            direction = "right";
-            moving = true;
+        // Keep the original four-direction feel, even when two movement keys are held.
+        int dx = Integer.signum(axisX);
+        int dy = Integer.signum(axisY);
+        if (dy != 0) dx = 0;
+        if (!attacking()) {
+            if (dy < 0) direction = Direction.UP;
+            else if (dy > 0) direction = Direction.DOWN;
+            else if (dx < 0) direction = Direction.LEFT;
+            else if (dx > 0) direction = Direction.RIGHT;
         }
-
-        collisionOn = false;
-        gp.cChecker.checkTile(this);
-
-       int objIndex =  gp.cChecker.checkObject(this, true);
-
-        pickUpObject(objIndex);
-
-        if (moving == true && collisionOn == false)
-        {
-            switch (direction) {
-                case "up": worldY -= speed;break;
-                case "down": worldY += speed;break;
-                case "left": worldX -= speed;break;
-                case "right": worldX += speed;break;
-            }
-        }
-
-        if (moving) {
-            spriteCounter++;
-            if (spriteCounter > 12) {
-                spriteNum = (spriteNum == 1) ? 2 : 1;
-                spriteCounter = 0;
-            }
-        } else {
-            spriteNum = 1;
-            spriteCounter = 0;
-        }
+        double speed = boots ? 300 : 220;
+        if (attacking()) speed *= 0.55;
+        if (guarding) speed *= .38;
+        moving = move(dx * speed * dt, dy * speed * dt, blocked);
+        if (moving) animationTime += dt;
+        else animationTime = 0;
     }
 
-    public void pickUpObject(int i) {
-        if (i != 999) {
-            String ObjectName = gp.obj[i].name;
-
-            switch (ObjectName) {
-                case "Key":
-                    gp.playSe(1);
-                    hasKey++;
-                    gp.obj[i] = null;
-                    gp.ui.showMessage("You got a key! ");
-                    break;
-                case "Door":
-                    if (hasKey > 0) {
-                        gp.playSe(3);
-                        hasKey--;
-                        gp.obj[i] = null;
-                    gp.ui.showMessage("You opened the door");
-                    } else {
-                        gp.ui.showMessage("You need a key to open this door.");
-                    }
-
-                    break;
-                case "Boots":
-                    gp.playSe(2);
-                    speed += 2;
-                    gp.obj[i] = null;
-                    gp.ui.showMessage("Speed Up");
-                        break;
-                    case "Chest":
-                        gp.ui.gameFinished = true;
-                        gp.stopMusic();
-                        gp.playSe(4);
-            }
-        }
+    public boolean attack() {
+        if (!alive() || guarding || attackCooldown > 0) return false;
+        attackCooldown = Math.max(ATTACK_COOLDOWN, weapon.duration() + .14);
+        attackRemaining = weapon.duration();
+        attackId++;
+        return true;
     }
 
-    public void draw(Graphics2D g2) {
-        BufferedImage image = null;
+    /** Reach is tied to the same facing direction used by the visible sword. */
+    public Rectangle2D.Double attackBox() {
+        if (!attacking()) return new Rectangle2D.Double();
+        return switch (direction) {
+            case UP -> new Rectangle2D.Double(x + 7, y - 35, 50, 68);
+            case DOWN -> new Rectangle2D.Double(x + 7, y + 37, 50, 68);
+            case LEFT -> new Rectangle2D.Double(x - 40, y + 15, 67, 50);
+            case RIGHT -> new Rectangle2D.Double(x + 37, y + 15, 67, 50);
+        };
+    }
 
-        switch (direction) {
-            case "up":
-                image = (spriteNum == 1) ? up1 : up2;
-                break;
-            case "down":
-                image = (spriteNum == 1) ? down1 : down2;
-                break;
-            case "left":
-                image = (spriteNum == 1) ? left1 : left2;
-                break;
-            case "right":
-                image = (spriteNum == 1) ? right1 : right2;
-                break;
-            default:
-                image = down1;
+    public boolean takeDamage(int amount, boolean shield) {
+        if (!alive() || amount <= 0 || immunityRemaining > 0) return false;
+        if (guarding && shield) {
+            if (blockCooldown <= 0) { blockPending = true; blockCooldown = .25; }
+            return false;
         }
+        int damage = shield ? Math.max(1, amount - 1) : amount;
+        health = Math.max(0, health - damage);
+        immunityRemaining = DAMAGE_IMMUNITY;
+        return true;
+    }
 
-        if (image != null) {
-            g2.drawImage(image, screenX, screenY, gp.tileSize, gp.tileSize, null);
+    public void heal(int amount) {
+        if (amount > 0 && alive()) health = Math.min(MAX_HEALTH, health + amount);
+    }
+
+    /** Checkpoint recovery keeps world position and swing IDs while restoring a safe live state. */
+    public void revive() {
+        health = MAX_HEALTH;
+        moving = false;
+        animationTime = attackRemaining = attackCooldown = 0;
+        immunityRemaining = DAMAGE_IMMUNITY;
+        guarding = blockPending = false;
+        blockCooldown = 0;
+    }
+
+    public void draw(Graphics2D graphics, int screenX, int screenY, int tileSize,
+                     boolean hasWeapon, boolean hasShield) {
+        Graphics2D g = (Graphics2D) graphics.create();
+        double scale = tileSize / (double) TILE_SIZE;
+        g.translate(screenX, screenY);
+        g.scale(scale, scale);
+        g.setColor(new Color(0, 0, 0, 80));
+        g.fillOval(13, 49, 38, 13);
+        if (immunityRemaining > 0 && ((int) (immunityRemaining * 16) & 1) == 0) {
+            g.setComposite(AlphaComposite.SrcOver.derive(0.45f));
         }
+        boolean swing = hasWeapon && attacking();
+        String path = guarding && hasShield ? "/Player/Guarding sprites/boy_guard_" + direction.sprite + ".png"
+                : swing ? "/Player/Attacking sprites/boy_" + weapon.spritePrefix() + "_" + direction.sprite
+                + "_" + (attackRemaining > weapon.duration() * .52 ? 1 : 2) + ".png"
+                : "/Player/boy_" + direction.sprite + "_" + frame() + ".png";
+        BufferedImage sprite = Assets.image(path);
+        int spriteWidth = sprite.getWidth() * 4, spriteHeight = sprite.getHeight() * 4;
+        int offsetX = swing && direction == Direction.LEFT ? -TILE_SIZE : 0;
+        int offsetY = swing && direction == Direction.UP ? -TILE_SIZE : 0;
+        g.drawImage(sprite, offsetX, offsetY, spriteWidth, spriteHeight, null);
+        if (hasShield && !guarding && !swing && direction != Direction.UP) {
+            g.drawImage(Assets.image("/objects/shield_wood.png"), 1, 33, 23, 23, null);
+        }
+        g.setComposite(AlphaComposite.SrcOver);
+        g.dispose();
     }
 }
