@@ -9,7 +9,7 @@ public final class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                JFrame window = new JFrame("The Sunken Seal | 2D Adventure");
+                JFrame window = new JFrame("True Adventure | 2D Adventure");
                 GamePanel panel = new GamePanel();
                 window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
                 window.setResizable(false);
