@@ -1,0 +1,6 @@
+# Order matters: the first level starts a new adventure.
+forest
+sanctuary
+vault
+emberwood
+crypt
