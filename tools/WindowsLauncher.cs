@@ -4,8 +4,8 @@ using System.IO;
 using System.Windows.Forms;
 using System.Reflection;
 
-[assembly: AssemblyTitle("The Sunken Seal")]
-[assembly: AssemblyProduct("The Sunken Seal")]
+[assembly: AssemblyTitle("True Adventure")]
+[assembly: AssemblyProduct("True Adventure")]
 [assembly: AssemblyVersion("1.0.0.0")]
 
 // Windows convenience launcher only. The game itself remains a standalone Java JAR.
@@ -37,7 +37,7 @@ internal static class WindowsLauncher
         catch (Exception exception)
         {
             MessageBox.Show("The adventure could not start. Keep the bundled java folder beside the launcher, " +
-                "or install Java 17 or newer.\n\n" + exception.Message, "The Sunken Seal",
+                "or install Java 17 or newer.\n\n" + exception.Message, "True Adventure",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
