@@ -7,6 +7,7 @@
   "sha256": "98518ecf554465057ee5509462631deeee374bc368c12a411d225cd29381f84b",
   "sourceArchive": "OpenJDK17U-jdk-sources_17.0.21_9.tar.gz",
   "sourceUrl": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.21%2B9/OpenJDK17U-jdk-sources_17.0.21_9.tar.gz",
+  "distributedSourceUrl": "https://github.com/aliahmed235/2D-Adventure-Game/releases/download/v2.0.0/OpenJDK17U-jdk-sources_17.0.21_9.tar.gz",
   "sourceSha256": "89a455fa83b19e3a166bca47a465d51712441be607543dd465083ef2437a426d",
   "upstreamRelease": "https://github.com/adoptium/temurin17-binaries/releases/tag/jdk-17.0.21%2B9"
 }
